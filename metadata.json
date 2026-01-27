@@ -1,0 +1,5 @@
+{
+  "name": "RSA CryptoManager",
+  "description": "A secure RSA key generation and file encryption utility. Features key management, 2048/4096-bit key generation, and client-side file encryption/decryption operations.",
+  "requestFramePermissions": []
+}

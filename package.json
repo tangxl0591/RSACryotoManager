@@ -1,0 +1,45 @@
+{
+  "name": "rsa-cryptomanager",
+  "version": "1.0.0",
+  "description": "RSA CryptoManager",
+  "main": "main.js",
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "dist:win": "tsc && vite build && electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.rsa.manager",
+    "productName": "RSA Manager",
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.0"
+  }
+}
