@@ -67,13 +67,18 @@ const OperationsView: React.FC = () => {
       if (operation === CryptoOperation.ENCRYPT) {
         // Use the algorithm stored with the key, default to AES-256 if undefined
         const algo = fullKey.algorithm || EncryptionAlgorithm.AES_256_GCM;
-        processedBuffer = await encryptData(fullKey.publicKey, fileBuffer, algo);
+        
+        // REVERSE OPERATION REQUESTED: Use PRIVATE Key to Encrypt
+        processedBuffer = await encryptData(fullKey.privateKey, fileBuffer, algo);
+        
         outputFilename = `${selectedFile.name}.enc`;
         // Encryption result is always binary, display as Base64 (first 200 chars for preview)
         const preview = arrayBufferToBase64(processedBuffer).substring(0, 500) + "...";
         setResultText(preview);
       } else {
-        processedBuffer = await decryptData(fullKey.privateKey, fileBuffer);
+        // REVERSE OPERATION REQUESTED: Use PUBLIC Key to Decrypt
+        processedBuffer = await decryptData(fullKey.publicKey, fileBuffer);
+        
         // Attempt to remove .enc extension if present, otherwise prepend decrypted_
         outputFilename = selectedFile.name.endsWith('.enc') 
           ? selectedFile.name.slice(0, -4) 
@@ -157,6 +162,12 @@ const OperationsView: React.FC = () => {
                 <Unlock className="w-4 h-4" />
                 <span>{t.operations.decrypt}</span>
               </button>
+            </div>
+            {/* Helper Text for Reverse Mode */}
+            <div className="mt-3 text-xs text-slate-500 bg-slate-900/50 p-2 rounded border border-slate-700/50">
+              {operation === CryptoOperation.ENCRYPT 
+                ? t.operations.privateKeyHint 
+                : t.operations.publicKeyHint}
             </div>
           </div>
 

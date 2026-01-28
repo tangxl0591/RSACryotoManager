@@ -36,6 +36,9 @@ export interface ElectronAPI {
   getKeys: () => Promise<StoredKeyMetadata[]>;
   getKey: (name: string) => Promise<RSAKeyPair | undefined>;
   openKeysFolder: () => Promise<void>;
+  // New methods for Private Encrypt / Public Decrypt
+  rsaPrivateEncrypt: (pemKey: string, data: ArrayBuffer) => Promise<ArrayBuffer>;
+  rsaPublicDecrypt: (pemKey: string, data: ArrayBuffer) => Promise<ArrayBuffer>;
 }
 
 export type Language = 'en' | 'zh';

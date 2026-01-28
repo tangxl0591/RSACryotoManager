@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -65,7 +66,7 @@ ipcMain.handle('saveKey', async (event, key) => {
       id: key.id,
       name: key.name,
       size: key.size,
-      algorithm: key.algorithm, // Added algorithm field
+      algorithm: key.algorithm, 
       createdAt: key.createdAt
     };
     
@@ -141,4 +142,33 @@ ipcMain.handle('openKeysFolder', async () => {
     fs.mkdirSync(dir, { recursive: true });
   }
   await shell.openPath(dir);
+});
+
+// REVERSE RSA OPERATIONS (Private Encrypt / Public Decrypt)
+ipcMain.handle('rsaPrivateEncrypt', async (event, pemKey, data) => {
+  try {
+    const buffer = Buffer.from(data);
+    const encrypted = crypto.privateEncrypt({
+      key: pemKey,
+      padding: crypto.constants.RSA_PKCS1_PADDING
+    }, buffer);
+    return encrypted;
+  } catch (error) {
+    console.error("RSA Private Encrypt Error:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle('rsaPublicDecrypt', async (event, pemKey, data) => {
+  try {
+    const buffer = Buffer.from(data);
+    const decrypted = crypto.publicDecrypt({
+      key: pemKey,
+      padding: crypto.constants.RSA_PKCS1_PADDING
+    }, buffer);
+    return decrypted;
+  } catch (error) {
+    console.error("RSA Public Decrypt Error:", error);
+    throw error;
+  }
 });

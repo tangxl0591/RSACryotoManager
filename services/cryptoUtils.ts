@@ -37,17 +37,6 @@ const exportKeyToPEM = (keyData: ArrayBuffer, type: 'PUBLIC' | 'PRIVATE'): strin
   return pem;
 };
 
-// Remove PEM header/footer and newlines
-const cleanPEM = (pem: string, type: 'PUBLIC' | 'PRIVATE'): string => {
-  const typeStr = type === 'PUBLIC' ? 'PUBLIC KEY' : 'PRIVATE KEY';
-  const header = `-----BEGIN ${typeStr}-----`;
-  const footer = `-----END ${typeStr}-----`;
-  
-  let clean = pem.replace(header, '').replace(footer, '');
-  clean = clean.replace(/\s/g, ''); // remove all whitespace
-  return clean;
-};
-
 export const generateRSAKeyPair = async (size: KeySize): Promise<{ publicKey: string; privateKey: string }> => {
   const keyPair = await window.crypto.subtle.generateKey(
     {
@@ -69,34 +58,23 @@ export const generateRSAKeyPair = async (size: KeySize): Promise<{ publicKey: st
   };
 };
 
-// HYBRID ENCRYPTION: AES-GCM + RSA-OAEP
+// HYBRID ENCRYPTION: AES-GCM + RSA (Private Encrypt Mode)
 // 1. Generate AES key (128 or 256 bit)
 // 2. Encrypt Data with AES-GCM
-// 3. Encrypt AES Key with RSA Public Key
+// 3. Encrypt AES Key with RSA PRIVATE Key (via Electron IPC)
 // 4. Pack: [KeyLength(4)][EncryptedKey][IV(12)][EncryptedData]
-export const encryptData = async (pemPublicKey: string, data: ArrayBuffer, algorithm: EncryptionAlgorithm = EncryptionAlgorithm.AES_256_GCM): Promise<ArrayBuffer> => {
+export const encryptData = async (pemKey: string, data: ArrayBuffer, algorithm: EncryptionAlgorithm = EncryptionAlgorithm.AES_256_GCM): Promise<ArrayBuffer> => {
   // Determine key length bits based on algorithm enum
   const aesKeyLength = algorithm === EncryptionAlgorithm.AES_128_GCM ? 128 : 256;
 
-  // 1. Import RSA Public Key
-  const cleanKey = cleanPEM(pemPublicKey, 'PUBLIC');
-  const binaryKey = base64ToArrayBuffer(cleanKey);
-  const rsaKey = await window.crypto.subtle.importKey(
-    "spki",
-    binaryKey,
-    { name: "RSA-OAEP", hash: "SHA-256" },
-    false,
-    ["encrypt"]
-  );
-
-  // 2. Generate AES Key
+  // 1. Generate AES Key
   const aesKey = await window.crypto.subtle.generateKey(
     { name: "AES-GCM", length: aesKeyLength },
     true,
     ["encrypt", "decrypt"]
   );
 
-  // 3. Encrypt Data with AES-GCM
+  // 2. Encrypt Data with AES-GCM
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedData = await window.crypto.subtle.encrypt(
     { name: "AES-GCM", iv: iv },
@@ -104,13 +82,18 @@ export const encryptData = async (pemPublicKey: string, data: ArrayBuffer, algor
     data
   );
 
-  // 4. Export AES Key and Encrypt with RSA
+  // 3. Export AES Key
   const rawAesKey = await window.crypto.subtle.exportKey("raw", aesKey);
-  const encryptedAesKey = await window.crypto.subtle.encrypt(
-    { name: "RSA-OAEP" },
-    rsaKey,
-    rawAesKey
-  );
+
+  // 4. Wrap AES Key with RSA PRIVATE Key
+  // Note: Web Crypto API RSA-OAEP does NOT support encrypting with Private Key.
+  // We must use the Electron IPC bridge to Node.js crypto for this operation.
+  if (!window.electronAPI) {
+    throw new Error("Private Key Encryption is only supported in the Electron desktop app.");
+  }
+
+  // pemKey passed here should be the PRIVATE KEY
+  const encryptedAesKey = await window.electronAPI.rsaPrivateEncrypt(pemKey, rawAesKey);
 
   // 5. Pack everything
   const keyLen = encryptedAesKey.byteLength;
@@ -137,7 +120,7 @@ export const encryptData = async (pemPublicKey: string, data: ArrayBuffer, algor
   return resultBuffer.buffer;
 };
 
-export const decryptData = async (pemPrivateKey: string, data: ArrayBuffer): Promise<ArrayBuffer> => {
+export const decryptData = async (pemKey: string, data: ArrayBuffer): Promise<ArrayBuffer> => {
   const view = new DataView(data);
   let offset = 0;
 
@@ -160,25 +143,15 @@ export const decryptData = async (pemPrivateKey: string, data: ArrayBuffer): Pro
   // 4. Extract Encrypted Data
   const encryptedData = data.slice(offset);
 
-  // 5. Import RSA Private Key
-  const cleanKey = cleanPEM(pemPrivateKey, 'PRIVATE');
-  const binaryKey = base64ToArrayBuffer(cleanKey);
-  const rsaKey = await window.crypto.subtle.importKey(
-    "pkcs8",
-    binaryKey,
-    { name: "RSA-OAEP", hash: "SHA-256" },
-    false,
-    ["decrypt"]
-  );
+  // 5. Decrypt AES Key using RSA PUBLIC Key (Reverse operation)
+  if (!window.electronAPI) {
+      throw new Error("Public Key Decryption is only supported in the Electron desktop app.");
+  }
+  
+  // pemKey passed here should be the PUBLIC KEY
+  const rawAesKey = await window.electronAPI.rsaPublicDecrypt(pemKey, encryptedAesKey);
 
-  // 6. Decrypt AES Key
-  const rawAesKey = await window.crypto.subtle.decrypt(
-    { name: "RSA-OAEP" },
-    rsaKey,
-    encryptedAesKey
-  );
-
-  // 7. Import AES Key (Length is inferred from raw key data)
+  // 6. Import AES Key (Length is inferred from raw key data)
   const aesKey = await window.crypto.subtle.importKey(
     "raw",
     rawAesKey,
@@ -187,7 +160,7 @@ export const decryptData = async (pemPrivateKey: string, data: ArrayBuffer): Pro
     ["decrypt"]
   );
 
-  // 8. Decrypt Data
+  // 7. Decrypt Data
   return await window.crypto.subtle.decrypt(
     { name: "AES-GCM", iv: new Uint8Array(iv) },
     aesKey,
