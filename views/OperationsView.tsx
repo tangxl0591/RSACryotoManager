@@ -68,7 +68,8 @@ const OperationsView: React.FC = () => {
         // Use the algorithm stored with the key, default to AES-256 if undefined
         const algo = fullKey.algorithm || EncryptionAlgorithm.AES_256_GCM;
         
-        // REVERSE OPERATION REQUESTED: Use PRIVATE Key to Encrypt
+        // REVERSE OPERATION REQUESTED: Use PRIVATE Key to Encrypt (Sign)
+        // encryptData will call electronAPI.rsaPrivateEncrypt
         processedBuffer = await encryptData(fullKey.privateKey, fileBuffer, algo);
         
         outputFilename = `${selectedFile.name}.enc`;
@@ -76,7 +77,8 @@ const OperationsView: React.FC = () => {
         const preview = arrayBufferToBase64(processedBuffer).substring(0, 500) + "...";
         setResultText(preview);
       } else {
-        // REVERSE OPERATION REQUESTED: Use PUBLIC Key to Decrypt
+        // REVERSE OPERATION REQUESTED: Use PUBLIC Key to Decrypt (Verify)
+        // decryptData will call electronAPI.rsaPublicDecrypt
         processedBuffer = await decryptData(fullKey.publicKey, fileBuffer);
         
         // Attempt to remove .enc extension if present, otherwise prepend decrypted_

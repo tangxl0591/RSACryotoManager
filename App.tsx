@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
+import Sidebar, { ViewState } from './components/Sidebar';
 import GeneratorView from './views/GeneratorView';
 import OperationsView from './views/OperationsView';
+import TextOperationsView from './views/TextOperationsView';
 import { LanguageProvider } from './contexts/LanguageContext';
 
 const AppContent: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'GENERATE' | 'OPERATIONS'>('GENERATE');
+  const [currentView, setCurrentView] = useState<ViewState>('GENERATE');
 
   return (
     <div className="flex h-screen w-screen bg-slate-950 overflow-hidden text-slate-200">
@@ -20,6 +21,7 @@ const AppContent: React.FC = () => {
         
         {currentView === 'GENERATE' && <GeneratorView />}
         {currentView === 'OPERATIONS' && <OperationsView />}
+        {currentView === 'TEXT_OPERATIONS' && <TextOperationsView />}
       </main>
     </div>
   );

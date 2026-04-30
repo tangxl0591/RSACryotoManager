@@ -5,7 +5,8 @@ export const translations: Record<Language, any> = {
     sidebar: {
       title: "RSA Manager",
       genKey: "Key Generation",
-      ops: "Encryption Ops",
+      ops: "File Ops",
+      textOps: "Text Ops",
       build: "Electron Ready Build"
     },
     generator: {
@@ -28,7 +29,7 @@ export const translations: Record<Language, any> = {
       errorName: "Key name is required"
     },
     operations: {
-      title: "Crypto Operations",
+      title: "File Operations",
       subtitle: "Encrypt (using Private Key) or Decrypt (using Public Key) files.",
       mode: "Operation Mode",
       encrypt: "Encrypt",
@@ -53,13 +54,24 @@ export const translations: Record<Language, any> = {
       copy: "Copy",
       copied: "Copied",
       usingAlgo: "Using:"
+    },
+    textOperations: {
+      title: "Text Operations",
+      subtitle: "Encrypt a text message or decrypt an encrypted message.",
+      inputLabel: "Input Content",
+      inputPlaceholder: "Enter text to encrypt, or base64 to decrypt...",
+      encryptBtn: "Encrypt Text",
+      decryptBtn: "Decrypt Text",
+      resultLabel: "Result",
+      emptyInputError: "Please enter text to process."
     }
   },
   zh: {
     sidebar: {
       title: "RSA 密钥管理",
       genKey: "密钥生成",
-      ops: "加解密操作",
+      ops: "文件加解密",
+      textOps: "内容加解密",
       build: "Electron 版本"
     },
     generator: {
@@ -82,8 +94,8 @@ export const translations: Record<Language, any> = {
       errorName: "请输入密钥名称"
     },
     operations: {
-      title: "加解密操作",
-      subtitle: "使用私钥加密，公钥解密模式。",
+      title: "文件操作",
+      subtitle: "使用私钥加密，公钥解密模式处理文件。",
       mode: "操作模式",
       encrypt: "加密",
       decrypt: "解密",
@@ -107,6 +119,16 @@ export const translations: Record<Language, any> = {
       copy: "复制",
       copied: "已复制",
       usingAlgo: "算法："
+    },
+    textOperations: {
+      title: "内容操作",
+      subtitle: "加密一段文本或解密已加密的 Base64 文本。",
+      inputLabel: "输入内容",
+      inputPlaceholder: "输入要加密的文本，或要解密的 Base64 密文...",
+      encryptBtn: "加密文本",
+      decryptBtn: "解密文本",
+      resultLabel: "处理结果",
+      emptyInputError: "请输入要处理的内容。"
     }
   }
 };

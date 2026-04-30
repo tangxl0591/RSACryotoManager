@@ -1,10 +1,12 @@
 import React from 'react';
-import { Key, Lock, ShieldCheck, Languages } from 'lucide-react';
+import { Key, Lock, ShieldCheck, FileText } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
+export type ViewState = 'GENERATE' | 'OPERATIONS' | 'TEXT_OPERATIONS';
+
 interface SidebarProps {
-  currentView: 'GENERATE' | 'OPERATIONS';
-  onNavigate: (view: 'GENERATE' | 'OPERATIONS') => void;
+  currentView: ViewState;
+  onNavigate: (view: ViewState) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
@@ -40,6 +42,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
         >
           <Lock className="w-5 h-5" />
           <span className="font-medium">{t.sidebar.ops}</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('TEXT_OPERATIONS')}
+          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+            currentView === 'TEXT_OPERATIONS'
+              ? 'bg-blue-600 text-white'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          }`}
+        >
+          <FileText className="w-5 h-5" />
+          <span className="font-medium">{t.sidebar.textOps}</span>
         </button>
       </nav>
 
