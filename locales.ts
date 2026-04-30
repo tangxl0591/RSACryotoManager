@@ -7,6 +7,7 @@ export const translations: Record<Language, any> = {
       genKey: "Key Generation",
       ops: "File Ops",
       textOps: "Text Ops",
+      base64Ops: "Base64 Parser",
       build: "Electron Ready Build"
     },
     generator: {
@@ -64,6 +65,16 @@ export const translations: Record<Language, any> = {
       decryptBtn: "Decrypt Text",
       resultLabel: "Result",
       emptyInputError: "Please enter text to process."
+    },
+    base64Ops: {
+      title: "Base64 Parser",
+      subtitle: "Encode plain text to Base64, or decode Base64 to plain text.",
+      inputLabel: "Input Content",
+      inputPlaceholder: "Enter text to encode or decode...",
+      encodeBtn: "Encode Base64",
+      decodeBtn: "Decode Base64",
+      resultLabel: "Result",
+      emptyInputError: "Please enter text to process."
     }
   },
   zh: {
@@ -72,6 +83,7 @@ export const translations: Record<Language, any> = {
       genKey: "密钥生成",
       ops: "文件加解密",
       textOps: "内容加解密",
+      base64Ops: "Base64 解析",
       build: "Electron 版本"
     },
     generator: {
@@ -127,6 +139,16 @@ export const translations: Record<Language, any> = {
       inputPlaceholder: "输入要加密的文本，或要解密的 Base64 密文...",
       encryptBtn: "加密文本",
       decryptBtn: "解密文本",
+      resultLabel: "处理结果",
+      emptyInputError: "请输入要处理的内容。"
+    },
+    base64Ops: {
+      title: "Base64 解析",
+      subtitle: "将明文编码为 Base64，或将 Base64 解码为明文。",
+      inputLabel: "输入内容",
+      inputPlaceholder: "输入要编码或解码的文本...",
+      encodeBtn: "转换 Base64",
+      decodeBtn: "解析明文",
       resultLabel: "处理结果",
       emptyInputError: "请输入要处理的内容。"
     }

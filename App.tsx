@@ -3,6 +3,7 @@ import Sidebar, { ViewState } from './components/Sidebar';
 import GeneratorView from './views/GeneratorView';
 import OperationsView from './views/OperationsView';
 import TextOperationsView from './views/TextOperationsView';
+import Base64OperationsView from './views/Base64OperationsView';
 import { LanguageProvider } from './contexts/LanguageContext';
 
 const AppContent: React.FC = () => {
@@ -22,6 +23,7 @@ const AppContent: React.FC = () => {
         {currentView === 'GENERATE' && <GeneratorView />}
         {currentView === 'OPERATIONS' && <OperationsView />}
         {currentView === 'TEXT_OPERATIONS' && <TextOperationsView />}
+        {currentView === 'BASE64_OPERATIONS' && <Base64OperationsView />}
       </main>
     </div>
   );

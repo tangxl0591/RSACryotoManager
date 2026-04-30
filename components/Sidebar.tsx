@@ -1,8 +1,8 @@
 import React from 'react';
-import { Key, Lock, ShieldCheck, FileText } from 'lucide-react';
+import { Key, Lock, ShieldCheck, FileText, Code2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-export type ViewState = 'GENERATE' | 'OPERATIONS' | 'TEXT_OPERATIONS';
+export type ViewState = 'GENERATE' | 'OPERATIONS' | 'TEXT_OPERATIONS' | 'BASE64_OPERATIONS';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -54,6 +54,18 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
         >
           <FileText className="w-5 h-5" />
           <span className="font-medium">{t.sidebar.textOps}</span>
+        </button>
+
+        <button
+          onClick={() => onNavigate('BASE64_OPERATIONS')}
+          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
+            currentView === 'BASE64_OPERATIONS'
+              ? 'bg-blue-600 text-white'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          }`}
+        >
+          <Code2 className="w-5 h-5" />
+          <span className="font-medium">{t.sidebar.base64Ops}</span>
         </button>
       </nav>
 
