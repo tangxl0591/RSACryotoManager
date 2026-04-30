@@ -10,6 +10,7 @@ const TextOperationsView: React.FC = () => {
   const [availableKeys, setAvailableKeys] = useState<StoredKeyMetadata[]>([]);
   const [selectedKeyName, setSelectedKeyName] = useState<string>('');
   const [operation, setOperation] = useState<CryptoOperation>(CryptoOperation.ENCRYPT);
+  const [algoMode, setAlgoMode] = useState<'HYBRID' | 'PURE_RSA'>('PURE_RSA');
   const [inputText, setInputText] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [resultText, setResultText] = useState<string | null>(null);
@@ -46,15 +47,28 @@ const TextOperationsView: React.FC = () => {
       let processedText: string;
 
       if (operation === CryptoOperation.ENCRYPT) {
-        const algo = fullKey.algorithm || EncryptionAlgorithm.AES_256_GCM;
         const encoder = new TextEncoder();
         const dataBuffer = encoder.encode(inputText).buffer;
         
-        const processedBuffer = await encryptData(fullKey.privateKey, dataBuffer, algo);
+        let processedBuffer: ArrayBuffer;
+        if (algoMode === 'HYBRID') {
+          const algo = fullKey.algorithm || EncryptionAlgorithm.AES_256_GCM;
+          processedBuffer = await encryptData(fullKey.privateKey, dataBuffer, algo);
+        } else {
+          if (!window.electronAPI) throw new Error("Electron API is not available.");
+          processedBuffer = await window.electronAPI.rsaPrivateEncrypt(fullKey.privateKey, dataBuffer);
+        }
         processedText = arrayBufferToBase64(processedBuffer);
       } else {
         const dataBuffer = base64ToArrayBuffer(inputText.trim());
-        const processedBuffer = await decryptData(fullKey.publicKey, dataBuffer);
+        
+        let processedBuffer: ArrayBuffer;
+        if (algoMode === 'HYBRID') {
+          processedBuffer = await decryptData(fullKey.publicKey, dataBuffer);
+        } else {
+          if (!window.electronAPI) throw new Error("Electron API is not available.");
+          processedBuffer = await window.electronAPI.rsaPublicDecrypt(fullKey.publicKey, dataBuffer);
+        }
         
         const decoder = new TextDecoder('utf-8');
         processedText = decoder.decode(processedBuffer);
@@ -121,6 +135,28 @@ const TextOperationsView: React.FC = () => {
                 ? t.operations.privateKeyHint 
                 : t.operations.publicKeyHint}
             </div>
+
+            <label className="block text-sm font-medium text-slate-300 mt-6 mb-3">{t.textOperations.algoMode}</label>
+            <div className="flex flex-col space-y-2">
+              <label className="flex items-center space-x-3 text-sm text-slate-300 cursor-pointer">
+                <input 
+                  type="radio" 
+                  checked={algoMode === 'PURE_RSA'} 
+                  onChange={() => { setAlgoMode('PURE_RSA'); setResultText(null); }}
+                  className="text-blue-500 focus:ring-blue-500 bg-slate-900 border-slate-700" 
+                />
+                <span>{t.textOperations.pureMode}</span>
+              </label>
+              <label className="flex items-center space-x-3 text-sm text-slate-300 cursor-pointer">
+                <input 
+                  type="radio" 
+                  checked={algoMode === 'HYBRID'} 
+                  onChange={() => { setAlgoMode('HYBRID'); setResultText(null); }}
+                  className="text-blue-500 focus:ring-blue-500 bg-slate-900 border-slate-700" 
+                />
+                <span>{t.textOperations.hybridMode}</span>
+              </label>
+            </div>
           </div>
 
           <div className="bg-slate-800 p-5 rounded-xl border border-slate-700">
@@ -185,7 +221,7 @@ const TextOperationsView: React.FC = () => {
               ) : (
                 <>
                   {operation === CryptoOperation.ENCRYPT ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
-                  <span>{operation === CryptoOperation.ENCRYPT ? `${t.textOperations.encryptBtn} (${selectedKeyMeta?.algorithm?.replace('AES-', '') || '256-GCM'})` : t.textOperations.decryptBtn}</span>
+                  <span>{operation === CryptoOperation.ENCRYPT ? `${t.textOperations.encryptBtn} (${algoMode === 'PURE_RSA' ? 'RSA' : selectedKeyMeta?.algorithm?.replace('AES-', '') || '256-GCM'})` : t.textOperations.decryptBtn}</span>
                 </>
               )}
             </button>

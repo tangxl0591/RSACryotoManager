@@ -64,7 +64,10 @@ export const translations: Record<Language, any> = {
       encryptBtn: "Encrypt Text",
       decryptBtn: "Decrypt Text",
       resultLabel: "Result",
-      emptyInputError: "Please enter text to process."
+      emptyInputError: "Please enter text to process.",
+      algoMode: "Algorithm Mode",
+      hybridMode: "Hybrid (AES+RSA) - For large text",
+      pureMode: "Pure RSA - For small text/licenses",
     },
     base64Ops: {
       title: "Base64 Parser",
@@ -140,7 +143,10 @@ export const translations: Record<Language, any> = {
       encryptBtn: "加密文本",
       decryptBtn: "解密文本",
       resultLabel: "处理结果",
-      emptyInputError: "请输入要处理的内容。"
+      emptyInputError: "请输入要处理的内容。",
+      algoMode: "加密模式",
+      hybridMode: "混合加密 (AES+RSA) - 适合长文本",
+      pureMode: "纯 RSA 加密 - 适合短文本/授权码",
     },
     base64Ops: {
       title: "Base64 解析",
