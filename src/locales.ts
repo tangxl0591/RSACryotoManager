@@ -91,7 +91,7 @@ export interface AppTranslations {
 export const translations: Record<'en' | 'zh', AppTranslations> = {
   en: {
     sidebar: {
-      title: "RSA & Base64 Suite",
+      title: "RSACryptoManager",
       genKey: "Key Generation",
       ops: "File Encryption",
       textOps: "Content Encryption",
@@ -119,7 +119,7 @@ export const translations: Record<'en' | 'zh', AppTranslations> = {
     },
     operations: {
       title: "RSA File Crypter",
-      subtitle: "Encrypt any file securely. Decrypt files using corresponding private/public keys.",
+      subtitle: "Secure file encryption and decryption utilizing RSA keys, executed entirely in your local sandbox.",
       mode: "Operation Mode",
       encrypt: "Encrypt File",
       decrypt: "Decrypt File",
@@ -180,7 +180,7 @@ export const translations: Record<'en' | 'zh', AppTranslations> = {
   },
   zh: {
     sidebar: {
-      title: "RSA & Base64 加密套件",
+      title: "RSACryptoManager",
       genKey: "RSA 密钥生成",
       ops: "文件加密 / 解密",
       textOps: "内容加密 / 解密",
@@ -208,7 +208,7 @@ export const translations: Record<'en' | 'zh', AppTranslations> = {
     },
     operations: {
       title: "RSA 文件加密箱",
-      subtitle: "支持对任何结构、格式的文件进行高强度加密，使用对应的配对公私钥恢复原始数据。",
+      subtitle: "提供基于 RSA 密钥的文件加解密安全管理服务，全部操作在本地沙箱内执行。",
       mode: "操作类型",
       encrypt: "加密文件",
       decrypt: "解密文件",

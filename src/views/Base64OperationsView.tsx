@@ -131,7 +131,6 @@ const Base64OperationsView: React.FC = () => {
             <ArrowLeftRight className="w-8 h-8 text-amber-400" />
             <span>{t.base64Ops.title}</span>
           </h2>
-          <p className="text-slate-400 mt-2 text-sm max-w-2xl">{t.base64Ops.subtitle}</p>
         </div>
         <div className="flex items-center space-x-2 bg-amber-950/40 border border-amber-900/30 px-3 py-1.5 rounded-xl text-amber-400 text-xs font-mono font-bold select-none">
           <Terminal className="w-4 h-4 animate-pulse" />

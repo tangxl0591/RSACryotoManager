@@ -174,7 +174,6 @@ const OperationsView: React.FC = () => {
           <FileDigit className="w-8 h-8 text-blue-400" />
           <span>{t.operations.title}</span>
         </h2>
-        <p className="text-slate-400 mt-2 text-sm max-w-2xl">{t.operations.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

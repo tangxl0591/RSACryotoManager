@@ -1,6 +1,6 @@
 {
-  "name": "RSA Crypto Suite & Base64 Parser",
-  "description": "Enterprise-grade RSA Key Generator, File Encryption/Decryption with Pure RSA and Hybrid modes, and Base64 encoder/decoder.",
+  "name": "RSACryptoManager",
+  "description": "RSA Key Generator, File Encryption/Decryption with Pure RSA and Hybrid modes, and Base64 encoder/decoder.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

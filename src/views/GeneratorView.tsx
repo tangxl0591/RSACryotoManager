@@ -99,7 +99,6 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({ onKeyChange }) => {
             <Key className="w-8 h-8 text-emerald-400" />
             <span>{t.generator.title}</span>
           </h2>
-          <p className="text-slate-400 mt-2 text-sm max-w-2xl">{t.generator.subtitle}</p>
         </div>
         <div className="flex items-center space-x-2 bg-emerald-950/40 border border-emerald-900/40 px-4 py-2 rounded-xl text-emerald-300 text-xs font-semibold select-none">
           <Cpu className="w-4 h-4 animate-pulse" />
