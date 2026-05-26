@@ -1,6 +1,8 @@
 {
-  "name": "RSA CryptoManager",
-  "description": "A secure RSA key generation and file encryption utility. Features key management, 2048/4096-bit key generation, and client-side file encryption/decryption operations.",
+  "name": "RSA Crypto Suite & Base64 Parser",
+  "description": "Enterprise-grade RSA Key Generator, File Encryption/Decryption with Pure RSA and Hybrid modes, and Base64 encoder/decoder.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
