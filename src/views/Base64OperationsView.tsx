@@ -161,7 +161,7 @@ const Base64OperationsView: React.FC = () => {
                 value={inputText}
                 onChange={(e) => { setInputText(e.target.value); setResultText(null); setError(null); }}
                 placeholder={mode === 'ENCODE' ? t.base64Ops.inputPlaceholder : 'Paste Base64 data string here...'}
-                className="w-full bg-slate-955 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-100 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none h-44 transition-all"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm font-mono text-slate-200 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none h-44 transition-all"
               />
             </div>
 
@@ -196,7 +196,7 @@ const Base64OperationsView: React.FC = () => {
                   <span>{copied ? t.base64Ops.copied : t.base64Ops.copy}</span>
                 </button>
               </div>
-              <pre className="p-4 text-xs font-mono text-slate-300 break-all select-all overflow-y-auto max-h-48 whitespace-pre-wrap leading-relaxed bg-slate-955">
+              <pre className="p-4 text-sm font-mono text-slate-200 break-all select-all overflow-y-auto max-h-48 whitespace-pre-wrap leading-relaxed bg-slate-950">
                 {resultText}
               </pre>
             </div>
@@ -282,7 +282,7 @@ const Base64OperationsView: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <div className="p-4 bg-slate-955 max-h-40 overflow-y-auto font-mono text-[9px] text-slate-400 break-all select-all leading-normal">
+              <div className="p-4 bg-slate-950 max-h-40 overflow-y-auto font-mono text-sm text-slate-200 break-all select-all leading-normal">
                 {includePrefix ? encodedFile.dataUri : encodedFile.base64}
               </div>
             </div>

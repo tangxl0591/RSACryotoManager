@@ -303,7 +303,7 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({ onKeyChange }) => {
                       <span>{copiedPub ? 'Copied' : 'Copy'}</span>
                     </button>
                   </div>
-                  <pre className="w-full bg-slate-950 p-4 rounded-xl text-[10px] font-mono text-slate-400 overflow-x-auto border border-slate-850/80 max-h-56">
+                  <pre className="w-full bg-slate-950 p-4 rounded-xl text-xs font-mono text-slate-200 overflow-x-auto border border-slate-850/80 max-h-56">
                     {selectedKey.publicKey}
                   </pre>
                 </div>
@@ -323,7 +323,7 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({ onKeyChange }) => {
                       <span>{copiedPriv ? 'Copied' : 'Copy'}</span>
                     </button>
                   </div>
-                  <pre className="w-full bg-slate-950 p-4 rounded-xl text-[10px] font-mono text-slate-500 overflow-x-auto border border-slate-850/80 max-h-56">
+                  <pre className="w-full bg-slate-950 p-4 rounded-xl text-xs font-mono text-slate-200 overflow-x-auto border border-slate-850/80 max-h-56">
                     {selectedKey.privateKey}
                   </pre>
                 </div>

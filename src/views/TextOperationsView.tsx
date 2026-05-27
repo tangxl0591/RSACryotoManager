@@ -257,8 +257,8 @@ const TextOperationsView: React.FC = () => {
                   <span>{copied ? t.textOps.copied : t.textOps.copy}</span>
                 </button>
               </div>
-              <div className="p-5 bg-slate-955">
-                <pre className="text-xs font-mono text-slate-300 break-all whitespace-pre-wrap select-all bg-slate-950 p-4 rounded-xl border border-slate-850 max-h-64 overflow-y-auto leading-relaxed">
+              <div className="p-5 bg-slate-950">
+                <pre className="text-sm font-mono text-slate-200 break-all whitespace-pre-wrap select-all bg-slate-950 p-4 rounded-xl border border-slate-850 max-h-64 overflow-y-auto leading-relaxed">
                   {resultText || 'Null or empty String.'}
                 </pre>
               </div>
