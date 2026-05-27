@@ -93,9 +93,9 @@ export const rsaDecryptWithPrivate = (privateKeyPem: string, base64Text: string,
  * Encrypt bytes using Private Key (License / Signing Mode)
  * Converts plaintext to raw signature or PKCS v1.5 padded ciphertext
  */
-export const rsaEncryptWithPrivate = (privateKeyPem: string, text: string, isRawBinary: boolean = false): string => {
+export const rsaEncryptWithPrivate = (privateKeyPem: string, text: string): string => {
   const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
-  const dataBytes = isRawBinary ? text : forge.util.encodeUtf8(text);
+  const dataBytes = forge.util.encodeUtf8(text);
   
   // High-compatibility PKCS#1 v1.5 Private Encrypt
   // Node-forge supports private key encryption under standard custom implementations:
@@ -142,14 +142,14 @@ export const rsaEncryptWithPrivate = (privateKeyPem: string, text: string, isRaw
 /**
  * Decrypt bytes using Public Key (License / Verification Mode)
  */
-export const rsaDecryptWithPublic = (publicKeyPem: string, base64Text: string, isRawBinary: boolean = false): string => {
+export const rsaDecryptWithPublic = (publicKeyPem: string, base64Text: string): string => {
   const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
   const encryptedBytes = forge.util.decode64(base64Text);
   
   try {
     // Attempt standard forge decrypt
     const decrypted = (publicKey as any).decrypt(encryptedBytes, 'RSAES-PKCS1-V1_5');
-    return isRawBinary ? decrypted : forge.util.decodeUtf8(decrypted);
+    return forge.util.decodeUtf8(decrypted);
   } catch (err) {
     // Fallback: Manually compute c^e mod n and then unpad
     const n = publicKey.n;
@@ -177,7 +177,7 @@ export const rsaDecryptWithPublic = (publicKeyPem: string, base64Text: string, i
     }
     
     const data = decryptedBytes.substring(zeroIndex + 1);
-    return isRawBinary ? data : forge.util.decodeUtf8(data);
+    return forge.util.decodeUtf8(data);
   }
 };
 
@@ -210,7 +210,7 @@ export const encryptFileHybrid = async (
   const combinedCiphertext = encryptedFileBytes + tagBytes;
 
   // Encrypt the AES key with the Private key (Reverse hybrid encryption for license-generation style files!)
-  const encryptedAesKeyBase64 = rsaEncryptWithPrivate(pemPrivateKey, aesKeyBytes, true);
+  const encryptedAesKeyBase64 = rsaEncryptWithPrivate(pemPrivateKey, aesKeyBytes);
   const encryptedAesKeyBytes = forge.util.decode64(encryptedAesKeyBase64);
   const aesKeyLength = encryptedAesKeyBytes.length;
 
@@ -283,7 +283,7 @@ export const decryptFileHybrid = async (
 
   // Decrypt the AES Key with the Public key
   const encryptedAesKeyBase64 = forge.util.encode64(encryptedAesKeyBytes);
-  const aesKeyBytes = rsaDecryptWithPublic(pemPublicKey, encryptedAesKeyBase64, true);
+  const aesKeyBytes = rsaDecryptWithPublic(pemPublicKey, encryptedAesKeyBase64);
 
   // Separate GCM Tag from ciphertext (last 16 bytes is the tag)
   if (payloadBytes.length < 16) {
