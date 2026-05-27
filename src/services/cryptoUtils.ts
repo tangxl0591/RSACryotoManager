@@ -215,28 +215,28 @@ export const encryptFileHybrid = async (
   const aesKeyLength = encryptedAesKeyBytes.length;
 
   // Create final packed array buffer:
-  // [2 bytes key length][Encrypted AES Key][12 bytes IV][Encrypted payload]
-  const packedBuffer = new ArrayBuffer(2 + aesKeyLength + 12 + combinedCiphertext.length);
+  // [4 bytes key length][Encrypted AES Key][12 bytes IV][Encrypted payload]
+  const packedBuffer = new ArrayBuffer(4 + aesKeyLength + 12 + combinedCiphertext.length);
   const view = new DataView(packedBuffer);
   
   // Write key length
-  view.setUint16(0, aesKeyLength, false); // Big endian
+  view.setUint32(0, aesKeyLength, false); // Big endian
 
   const uint8View = new Uint8Array(packedBuffer);
   
   // Write encrypted AES key
   for (let i = 0; i < aesKeyLength; i++) {
-    uint8View[2 + i] = encryptedAesKeyBytes.charCodeAt(i);
+    uint8View[4 + i] = encryptedAesKeyBytes.charCodeAt(i);
   }
 
   // Write IV
   for (let i = 0; i < 12; i++) {
-    uint8View[2 + aesKeyLength + i] = ivBytes.charCodeAt(i);
+    uint8View[4 + aesKeyLength + i] = ivBytes.charCodeAt(i);
   }
 
   // Write encrypted file data (including GCM tag)
   for (let i = 0; i < combinedCiphertext.length; i++) {
-    uint8View[2 + aesKeyLength + 12 + i] = combinedCiphertext.charCodeAt(i);
+    uint8View[4 + aesKeyLength + 12 + i] = combinedCiphertext.charCodeAt(i);
   }
 
   return packedBuffer;
@@ -250,12 +250,12 @@ export const decryptFileHybrid = async (
   packedData: ArrayBuffer
 ): Promise<ArrayBuffer> => {
   const view = new DataView(packedData);
-  if (packedData.byteLength < 14) {
+  if (packedData.byteLength < 16) {
     throw new Error("Invalid encrypted file package: too small.");
   }
 
-  const aesKeyLength = view.getUint16(0, false);
-  if (packedData.byteLength < 2 + aesKeyLength + 12) {
+  const aesKeyLength = view.getUint32(0, false);
+  if (packedData.byteLength < 4 + aesKeyLength + 12) {
     throw new Error("Malformed encrypted file package: structure corrupt.");
   }
 
@@ -264,18 +264,18 @@ export const decryptFileHybrid = async (
   // Extract encrypted AES Key bytes
   let encryptedAesKeyBytes = '';
   for (let i = 0; i < aesKeyLength; i++) {
-    encryptedAesKeyBytes += String.fromCharCode(uint8View[2 + i]);
+    encryptedAesKeyBytes += String.fromCharCode(uint8View[4 + i]);
   }
 
   // Extract IV bytes
   let ivBytes = '';
   for (let i = 0; i < 12; i++) {
-    ivBytes += String.fromCharCode(uint8View[2 + aesKeyLength + i]);
+    ivBytes += String.fromCharCode(uint8View[4 + aesKeyLength + i]);
   }
 
   // Extract encrypted payload bytes
   let payloadBytes = '';
-  const payloadOffset = 2 + aesKeyLength + 12;
+  const payloadOffset = 4 + aesKeyLength + 12;
   const payloadLength = packedData.byteLength - payloadOffset;
   for (let i = 0; i < payloadLength; i++) {
     payloadBytes += String.fromCharCode(uint8View[payloadOffset + i]);
