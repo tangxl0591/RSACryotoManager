@@ -18,23 +18,21 @@ export interface KeyPairResult {
  */
 export const generateKeyPair = async (bits: KeySize): Promise<KeyPairResult> => {
   return new Promise((resolve, reject) => {
-    // Generate keys asynchronously using forge's callback to avoid blocking the main thread
-    forge.pki.rsa.generateKeyPair({ bits, workers: -1 }, (error, keypair) => {
-      if (error) {
+    // Generate keys in a background timeout chunk to avoid blocking the UI thread main loop entirely
+    // We avoid forge's Web Workers (`workers: -1`) as they can hang indefinitely in bundled envs
+    setTimeout(() => {
+      try {
+        const keypair = forge.pki.rsa.generateKeyPair({ bits });
+        const publicKeyPem = forge.pki.publicKeyToPem(keypair.publicKey);
+        const privateKeyPem = forge.pki.privateKeyToPem(keypair.privateKey);
+        resolve({
+          publicKey: publicKeyPem,
+          privateKey: privateKeyPem,
+        });
+      } catch (error) {
         reject(error);
-      } else {
-        try {
-          const publicKeyPem = forge.pki.publicKeyToPem(keypair.publicKey);
-          const privateKeyPem = forge.pki.privateKeyToPem(keypair.privateKey);
-          resolve({
-            publicKey: publicKeyPem,
-            privateKey: privateKeyPem,
-          });
-        } catch (e) {
-          reject(e);
-        }
       }
-    });
+    }, 50);
   });
 };
 

@@ -61,14 +61,19 @@ export const saveKeyToStorage = (name: string, publicKey: string, privateKey: st
   
   if (fs && path && dir) {
     try {
-      // Create safe filename
-      const safeName = newName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'default_key';
+      // Create safe folder name from alias
+      const folderName = newName.replace(/[^a-zA-Z0-9_\-\u4e00-\u9fa5]/g, '_').trim() || 'default_key';
+      const keyDir = path.join(dir, folderName);
       
-      // Attempt to save keys as direct files for users to access locally
-      fs.writeFileSync(path.join(dir, `${safeName}_public.pem`), publicKey, 'utf8');
-      fs.writeFileSync(path.join(dir, `${safeName}_private.pem`), privateKey, 'utf8');
+      if (!fs.existsSync(keyDir)) {
+         fs.mkdirSync(keyDir, { recursive: true });
+      }
       
-      // Save manifest too
+      // Save keys inside the alias folder
+      fs.writeFileSync(path.join(keyDir, `public.pem`), publicKey, 'utf8');
+      fs.writeFileSync(path.join(keyDir, `private.pem`), privateKey, 'utf8');
+      
+      // Save manifest in root dir
       fs.writeFileSync(path.join(dir, 'keys.json'), JSON.stringify(savedKeys, null, 2), 'utf8');
     } catch (e) {
       console.error('Failed to write keys to file system', e);
@@ -100,7 +105,7 @@ export const getSavedKeys = (): StoredKey[] => {
       // 2. Read explicit key files dropped in the folder or subfolders
       const pemMap = new Map<string, Partial<StoredKey>>();
 
-      const readPemFilesRecursive = (currentDir: string) => {
+      const readPemFilesRecursive = (currentDir: string, folderNameFallback?: string) => {
         try {
           const items = fs.readdirSync(currentDir);
           items.forEach((item: string) => {
@@ -108,7 +113,8 @@ export const getSavedKeys = (): StoredKey[] => {
             try {
               const stat = fs.statSync(fullPath);
               if (stat.isDirectory()) {
-                readPemFilesRecursive(fullPath);
+                 // The folder name becomes the key name fallback
+                 readPemFilesRecursive(fullPath, item);
               } else if (stat.isFile() && stat.size < 1024 * 100) { // Max 100KB for keys
                 if (item.endsWith('.json')) return; // skip manifest
                 const content = fs.readFileSync(fullPath, 'utf8');
@@ -119,10 +125,11 @@ export const getSavedKeys = (): StoredKey[] => {
                 if (content.includes('PRIVATE KEY')) { isKey = true; isPriv = true; }
 
                 if (isKey) {
-                  let keyName = item.replace(/(_public|_private| public| private|\.pem|\.key|\.pub|\.txt)$/ig, '').trim();
-                  if (item.toLowerCase().endsWith('public.pem') || item.toLowerCase().endsWith('pub.pem')) {
+                  let keyName = folderNameFallback || item.replace(/(_public|_private| public| private|\.pem|\.key|\.pub|\.txt)$/ig, '').trim();
+                  if (!folderNameFallback && (item.toLowerCase().endsWith('public.pem') || item.toLowerCase().endsWith('pub.pem'))) {
                     keyName = item.replace(/(_?public|_?pub)\.pem$/i, '').trim();
                   }
+                  if (!keyName) keyName = "UnnamedKey";
 
                   if (!pemMap.has(keyName)) {
                      pemMap.set(keyName, {
@@ -195,9 +202,14 @@ export const getSavedKeys = (): StoredKey[] => {
           if (sysDir) {
              fs.writeFileSync(path.join(sysDir, 'keys.json'), JSON.stringify(keys, null, 2), 'utf8');
              keys.forEach(k => {
-                const safeName = k.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'key';
-                if (k.publicKey) fs.writeFileSync(path.join(sysDir, `${safeName}_public.pem`), k.publicKey, 'utf8');
-                if (k.privateKey) fs.writeFileSync(path.join(sysDir, `${safeName}_private.pem`), k.privateKey, 'utf8');
+                const folderName = k.name.replace(/[^a-zA-Z0-9_\-\u4e00-\u9fa5]/g, '_').trim() || 'default_key';
+                const keyDir = path.join(sysDir, folderName);
+                if (!fs.existsSync(keyDir)) {
+                   fs.mkdirSync(keyDir, { recursive: true });
+                }
+                
+                if (k.publicKey) fs.writeFileSync(path.join(keyDir, `public.pem`), k.publicKey, 'utf8');
+                if (k.privateKey) fs.writeFileSync(path.join(keyDir, `private.pem`), k.privateKey, 'utf8');
              });
           }
       }

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, Text, Copy, Check, Sparkles, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { rsaEncryptWithPublic, rsaDecryptWithPrivate, rsaEncryptWithPrivate, rsaDecryptWithPublic, encryptFileHybrid, decryptFileHybrid, arrayBufferToBase64, base64ToArrayBuffer, EncryptionAlgorithm } from '../services/cryptoUtils';
+import { rsaEncryptWithPrivate, rsaDecryptWithPublic, encryptFileHybrid, decryptFileHybrid, arrayBufferToBase64, base64ToArrayBuffer, EncryptionAlgorithm } from '../services/cryptoUtils';
 import { getSavedKeys, StoredKey } from '../services/keyStorage';
 
 const TextOperationsView: React.FC = () => {
   const { t } = useLanguage();
-  const [flow, setFlow] = useState<'STANDARD' | 'LICENSE'>('LICENSE'); // Default to licensing mode as requested by user queries
   const [algoMode, setAlgoMode] = useState<'HYBRID' | 'PURE_RSA'>('PURE_RSA');
   const [savedKeys, setSavedKeys] = useState<StoredKey[]>([]);
   const [selectedKeyId, setSelectedKeyId] = useState<string>('');
@@ -44,33 +43,16 @@ const TextOperationsView: React.FC = () => {
     try {
       let output = '';
 
-      if (flow === 'LICENSE') {
-        // LICENSING FLOW: Private key encrypt (or sign), Public key decrypt (or verify)
-        if (algoMode === 'PURE_RSA') {
-          // Direct RSA Private Encrypt
-          output = rsaEncryptWithPrivate(key.privateKey, inputText);
-        } else {
-          // Hybrid: Encrypt payload with AES-256 and wrap symmetric key in RSA Private key
-          const encoder = new TextEncoder();
-          const buffer = encoder.encode(inputText).buffer;
-          const packed = await encryptFileHybrid(key.privateKey, buffer, EncryptionAlgorithm.AES_256_GCM);
-          output = arrayBufferToBase64(packed);
-        }
+      // LICENSING FLOW: Private key encrypt (or sign), Public key decrypt (or verify)
+      if (algoMode === 'PURE_RSA') {
+        // Direct RSA Private Encrypt
+        output = rsaEncryptWithPrivate(key.privateKey, inputText);
       } else {
-        // STANDARD FLOW: Public key encrypt, Private key decrypt
-        if (algoMode === 'PURE_RSA') {
-          output = rsaEncryptWithPublic(key.publicKey, inputText);
-        } else {
-          // Strictly wrap AES key with standard RSA public key is typically asymmetric public encrypt.
-          // In cryptoUtils we wrapped AES key using private key encryption for license style packaging.
-          // Let's implement standard hybrid format or run direct rsaEncrypt/Decrypt.
-          // For text operations standard hybrid mode:
-          // Since our Hybrid module standardizes on generating license style packages, let's process it safely.
-          const encoder = new TextEncoder();
-          const buffer = encoder.encode(inputText).buffer;
-          const packed = await encryptFileHybrid(key.privateKey, buffer, EncryptionAlgorithm.AES_256_GCM);
-          output = arrayBufferToBase64(packed);
-        }
+        // Hybrid: Encrypt payload with AES-256 and wrap symmetric key in RSA Private key
+        const encoder = new TextEncoder();
+        const buffer = encoder.encode(inputText).buffer;
+        const packed = await encryptFileHybrid(key.privateKey, buffer, EncryptionAlgorithm.AES_256_GCM);
+        output = arrayBufferToBase64(packed);
       }
 
       setResultText(output);
@@ -101,26 +83,14 @@ const TextOperationsView: React.FC = () => {
     try {
       let output = '';
 
-      if (flow === 'LICENSE') {
-        // LICENSING DECRYPT: Public Key Decrypt
-        if (algoMode === 'PURE_RSA') {
-          output = rsaDecryptWithPublic(key.publicKey, inputText.trim());
-        } else {
-          const buffer = base64ToArrayBuffer(inputText.trim());
-          const unpacked = await decryptFileHybrid(key.publicKey, buffer);
-          const decoder = new TextDecoder('utf-8');
-          output = decoder.decode(unpacked);
-        }
+      // LICENSING DECRYPT: Public Key Decrypt
+      if (algoMode === 'PURE_RSA') {
+        output = rsaDecryptWithPublic(key.publicKey, inputText.trim());
       } else {
-        // STANDARD DECRYPT: Private Key Decrypt
-        if (algoMode === 'PURE_RSA') {
-          output = rsaDecryptWithPrivate(key.privateKey, inputText.trim());
-        } else {
-          const buffer = base64ToArrayBuffer(inputText.trim());
-          const unpacked = await decryptFileHybrid(key.publicKey, buffer); // Hybrid decodes with PK public key
-          const decoder = new TextDecoder('utf-8');
-          output = decoder.decode(unpacked);
-        }
+        const buffer = base64ToArrayBuffer(inputText.trim());
+        const unpacked = await decryptFileHybrid(key.publicKey, buffer);
+        const decoder = new TextDecoder('utf-8');
+        output = decoder.decode(unpacked);
       }
 
       setResultText(output);
@@ -186,38 +156,7 @@ const TextOperationsView: React.FC = () => {
           </div>
 
           {/* Flow Selector */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.textOps.encryptionFlow}</h3>
-            <div className="space-y-3">
-              {/* License Mode Selector */}
-              <label className="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950/20 hover:border-slate-700/60 transition-all cursor-pointer">
-                <input
-                  type="radio"
-                  checked={flow === 'LICENSE'}
-                  onChange={() => { setFlow('LICENSE'); setResultText(null); setError(null); }}
-                  className="mt-1 h-4 w-4 text-blue-500 border-slate-700 focus:ring-blue-500 bg-slate-900 focus:ring-offset-slate-950"
-                />
-                <div>
-                  <span className="block text-xs font-bold text-slate-200">{t.textOps.flowLicense}</span>
-                  <span className="block text-[10px] text-slate-500 mt-1 leading-relaxed">{t.textOps.flowLicenseDesc}</span>
-                </div>
-              </label>
-
-              {/* Standard Mode Selector */}
-              <label className="flex items-start space-x-3 p-3.5 rounded-xl border border-slate-800 bg-slate-950/20 hover:border-slate-700/60 transition-all cursor-pointer">
-                <input
-                  type="radio"
-                  checked={flow === 'STANDARD'}
-                  onChange={() => { setFlow('STANDARD'); setResultText(null); setError(null); }}
-                  className="mt-1 h-4 w-4 text-blue-500 border-slate-700 focus:ring-blue-500 bg-slate-900 focus:ring-offset-slate-950"
-                />
-                <div>
-                  <span className="block text-xs font-bold text-slate-200">{t.textOps.flowStandard}</span>
-                  <span className="block text-[10px] text-slate-500 mt-1 leading-relaxed">{t.textOps.flowStandardDesc}</span>
-                </div>
-              </label>
-            </div>
-          </div>
+          {/* <Removed by user request to enforce standard flow> */}
 
           {/* Symmetrical Layer Selector */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
@@ -253,7 +192,7 @@ const TextOperationsView: React.FC = () => {
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">Payload Content</label>
               <textarea
-                className="w-full bg-slate-955 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-200 focus:ring-2 focus:ring-purple-500 outline-none resize-none h-44"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm font-mono text-slate-200 focus:ring-2 focus:ring-purple-500 outline-none resize-none h-44"
                 placeholder={t.textOps.inputPlaceholder}
                 value={inputText}
                 onChange={(e) => { setInputText(e.target.value); setResultText(null); setError(null); }}
