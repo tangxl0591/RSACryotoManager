@@ -208,7 +208,7 @@ export const translations: Record<'en' | 'zh', AppTranslations> = {
     },
     operations: {
       title: "RSA 文件加密箱",
-      subtitle: "提供基于 RSA 密钥的文件加解密安全管理服务，全部操作在本地沙箱内执行。",
+      subtitle: "支持对任何结构、格式的文件进行高强度加密，使用对应的配对公私钥恢复原始数据。",
       mode: "操作类型",
       encrypt: "加密文件",
       decrypt: "解密文件",
