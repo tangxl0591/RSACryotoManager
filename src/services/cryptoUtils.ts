@@ -93,63 +93,53 @@ export const rsaDecryptWithPrivate = (privateKeyPem: string, base64Text: string,
  * Encrypt bytes using Private Key (License / Signing Mode)
  * Converts plaintext to raw signature or PKCS v1.5 padded ciphertext
  */
-export const rsaEncryptWithPrivate = (privateKeyPem: string, text: string): string => {
+export const rsaEncryptWithPrivate = (privateKeyPem: string, text: string, isRawBinary: boolean = false): string => {
   const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
-  const dataBytes = forge.util.encodeUtf8(text);
+  const dataBytes = isRawBinary ? text : forge.util.encodeUtf8(text);
   
-  // High-compatibility PKCS#1 v1.5 Private Encrypt
-  // Node-forge supports private key encryption under standard custom implementations:
-  // We can accomplish Private Key Encryption (also called "raw decryption" or "Raw sign") by doing:
-  // privateKey.sign() or privateKey.encrypt() if supported, or directly doing raw block exponentiation.
-  // Let's use forge privateKey.encrypt or custom padding for highest robustness.
-  try {
-    // Attempt standard forge private-key encryption
-    const encrypted = (privateKey as any).encrypt(dataBytes, 'RSAES-PKCS1-V1_5');
-    return forge.util.encode64(encrypted);
-  } catch (e) {
-    // Fallback: If not supported directly, create a manual PKCS#1 v1.5 padded block and compute m^d mod n
-    const n = privateKey.n;
-    const d = privateKey.d;
-    const keySize = Math.ceil(n.bitLength() / 8);
-    
-    // PKCS#1 v1.5 Block Type 1 format: 00 || 01 || PS || 00 || Data
-    const dataLen = dataBytes.length;
-    if (dataLen > keySize - 11) {
-      throw new Error(`Data is too long for selected key length. Limit is ${keySize - 11} bytes.`);
-    }
-    
-    const psLen = keySize - dataLen - 3;
-    let padded = '\x00\x01';
-    for (let i = 0; i < psLen; i++) {
-      padded += '\xff';
-    }
-    padded += '\x00' + dataBytes;
-    
-    // Compute m^d mod n
-    const m = new (forge as any).jsbn.BigInteger(forge.util.bytesToHex(padded), 16);
-    const c = m.modPow(d, n);
-    
-    let hex = c.toString(16);
-    // Left-pad hex if necessary
-    while (hex.length < keySize * 2) {
-      hex = '0' + hex;
-    }
-    const encryptedBytes = forge.util.hexToBytes(hex);
-    return forge.util.encode64(encryptedBytes);
+  // High-compatibility PKCS#1 v1.5 Private Encrypt (Block Type 1)
+  // Node.js crypto.privateEncrypt uses this by default.
+  // Pad block: 00 01 FF FF ... FF 00 [DATA]
+  const n = privateKey.n;
+  const d = privateKey.d;
+  const keySize = Math.ceil(n.bitLength() / 8);
+  
+  const dataLen = dataBytes.length;
+  if (dataLen > keySize - 11) {
+    throw new Error(`Data is too long for selected key length. Limit is ${keySize - 11} bytes.`);
   }
+  
+  const psLen = keySize - dataLen - 3;
+  let padded = '\x00\x01';
+  for (let i = 0; i < psLen; i++) {
+    padded += '\xff';
+  }
+  padded += '\x00' + dataBytes;
+  
+  // Compute m^d mod n
+  const m = new (forge as any).jsbn.BigInteger(forge.util.bytesToHex(padded), 16);
+  const c = m.modPow(d, n);
+  
+  let hex = c.toString(16);
+  // Left-pad hex if necessary
+  while (hex.length < keySize * 2) {
+    hex = '0' + hex;
+  }
+  const encryptedBytes = forge.util.hexToBytes(hex);
+  return forge.util.encode64(encryptedBytes);
 };
 
 /**
  * Decrypt bytes using Public Key (License / Verification Mode)
  */
-export const rsaDecryptWithPublic = (publicKeyPem: string, base64Text: string): string => {
+export const rsaDecryptWithPublic = (publicKeyPem: string, base64Text: string, isRawBinary: boolean = false): string => {
   const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
   const encryptedBytes = forge.util.decode64(base64Text);
   
   try {
     // Attempt standard forge decrypt
     const decrypted = (publicKey as any).decrypt(encryptedBytes, 'RSAES-PKCS1-V1_5');
-    return forge.util.decodeUtf8(decrypted);
+    return isRawBinary ? decrypted : forge.util.decodeUtf8(decrypted);
   } catch (err) {
     // Fallback: Manually compute c^e mod n and then unpad
     const n = publicKey.n;
@@ -177,7 +167,7 @@ export const rsaDecryptWithPublic = (publicKeyPem: string, base64Text: string): 
     }
     
     const data = decryptedBytes.substring(zeroIndex + 1);
-    return forge.util.decodeUtf8(data);
+    return isRawBinary ? data : forge.util.decodeUtf8(data);
   }
 };
 
@@ -210,7 +200,7 @@ export const encryptFileHybrid = async (
   const combinedCiphertext = encryptedFileBytes + tagBytes;
 
   // Encrypt the AES key with the Private key (Reverse hybrid encryption for license-generation style files!)
-  const encryptedAesKeyBase64 = rsaEncryptWithPrivate(pemPrivateKey, aesKeyBytes);
+  const encryptedAesKeyBase64 = rsaEncryptWithPrivate(pemPrivateKey, aesKeyBytes, true);
   const encryptedAesKeyBytes = forge.util.decode64(encryptedAesKeyBase64);
   const aesKeyLength = encryptedAesKeyBytes.length;
 
@@ -220,7 +210,7 @@ export const encryptFileHybrid = async (
   const view = new DataView(packedBuffer);
   
   // Write key length
-  view.setUint32(0, aesKeyLength, false); // Big endian
+  view.setUint32(0, aesKeyLength, true); // Little endian
 
   const uint8View = new Uint8Array(packedBuffer);
   
@@ -254,7 +244,7 @@ export const decryptFileHybrid = async (
     throw new Error("Invalid encrypted file package: too small.");
   }
 
-  const aesKeyLength = view.getUint32(0, false);
+  const aesKeyLength = view.getUint32(0, true);
   if (packedData.byteLength < 4 + aesKeyLength + 12) {
     throw new Error("Malformed encrypted file package: structure corrupt.");
   }
@@ -283,7 +273,7 @@ export const decryptFileHybrid = async (
 
   // Decrypt the AES Key with the Public key
   const encryptedAesKeyBase64 = forge.util.encode64(encryptedAesKeyBytes);
-  const aesKeyBytes = rsaDecryptWithPublic(pemPublicKey, encryptedAesKeyBase64);
+  const aesKeyBytes = rsaDecryptWithPublic(pemPublicKey, encryptedAesKeyBase64, true);
 
   // Separate GCM Tag from ciphertext (last 16 bytes is the tag)
   if (payloadBytes.length < 16) {
@@ -293,7 +283,7 @@ export const decryptFileHybrid = async (
   const tagBytes = payloadBytes.substring(payloadBytes.length - 16);
 
   // Decrypt payload using AES-GCM (Forge)
-  const decipher = forge.cipher.createDecipher('AES-GCM', aesKeyBytes);
+  const decipher = forge.cipher.createDecipher('AES-GCM', forge.util.createBuffer(aesKeyBytes));
   decipher.start({
     iv: ivBytes,
     tag: forge.util.createBuffer(tagBytes)
