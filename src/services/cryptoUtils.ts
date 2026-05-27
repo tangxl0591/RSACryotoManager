@@ -1,5 +1,20 @@
 import forge from 'node-forge';
 
+// Seed forge random in browser environments to prevent hanging during key generation
+if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+  try {
+    const entropy = new Uint8Array(256);
+    window.crypto.getRandomValues(entropy);
+    let str = '';
+    for (let i = 0; i < entropy.length; i++) {
+        str += String.fromCharCode(entropy[i]);
+    }
+    (forge.random as any).collect(str);
+  } catch (e) {
+    console.warn('Failed to seed forge.random', e);
+  }
+}
+
 // Key sizes we support
 export type KeySize = 1024 | 2048 | 4096;
 
@@ -12,6 +27,22 @@ export interface KeyPairResult {
   publicKey: string;  // PEM
   privateKey: string; // PEM
 }
+
+/**
+ * Generate cryptographically secure random bytes as a binary string
+ */
+const generateSecureBytes = (size: number): string => {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+    const array = new Uint8Array(size);
+    window.crypto.getRandomValues(array);
+    let str = '';
+    for (let i = 0; i < size; i++) {
+        str += String.fromCharCode(array[i]);
+    }
+    return str;
+  }
+  return forge.random.getBytesSync(size); // Fallback
+};
 
 /**
  * Generate an RSA key pair natively using node-forge
@@ -161,8 +192,8 @@ export const encryptFileHybrid = async (
 ): Promise<ArrayBuffer> => {
   // Generate a random AES key & IV using window.crypto
   const keySizeInBytes = algorithm === EncryptionAlgorithm.AES_128_GCM ? 16 : 32;
-  const aesKeyBytes = forge.random.getBytesSync(keySizeInBytes);
-  const ivBytes = forge.random.getBytesSync(12);
+  const aesKeyBytes = generateSecureBytes(keySizeInBytes);
+  const ivBytes = generateSecureBytes(12);
 
   // Encrypt the file data using AES-GCM (Forge)
   const cipher = forge.cipher.createCipher('AES-GCM', aesKeyBytes);
