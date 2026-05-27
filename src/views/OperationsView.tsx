@@ -105,7 +105,8 @@ const OperationsView: React.FC = () => {
           outputBuffer = encoder.encode(base64Enc).buffer;
         } else {
           // Hybrid GCM with RSA key wrapping
-          outputBuffer = await encryptFileHybrid(key.privateKey, fileBuffer, EncryptionAlgorithm.AES_256_GCM);
+          const algoToUse = (key.defaultAlgo as EncryptionAlgorithm) || EncryptionAlgorithm.AES_256_GCM;
+          outputBuffer = await encryptFileHybrid(key.privateKey, fileBuffer, algoToUse);
         }
       } else {
         // Decryption mode
@@ -268,6 +269,17 @@ const OperationsView: React.FC = () => {
                   <span className="block text-[10px] text-slate-500 mt-1 leading-relaxed">{t.operations.pureModeDesc}</span>
                 </div>
               </label>
+
+              {strategy === 'HYBRID' && selectKeyMeta && (
+                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center gap-2">
+                   <div className="w-4 h-4 text-blue-500 flex-shrink-0">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-4m0 0V5m0 12l-4-4m4 4l4-4" />
+                     </svg>
+                   </div>
+                   <span className="text-xs font-mono text-slate-400">算法: <span className="bg-blue-600 font-bold px-1.5 py-0.5 rounded text-white">{selectKeyMeta.defaultAlgo || 'AES-256-GCM'}</span></span>
+                </div>
+              )}
             </div>
           </div>
         </div>

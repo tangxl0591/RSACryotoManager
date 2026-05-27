@@ -51,7 +51,8 @@ const TextOperationsView: React.FC = () => {
         // Hybrid: Encrypt payload with AES-256 and wrap symmetric key in RSA Private key
         const encoder = new TextEncoder();
         const buffer = encoder.encode(inputText).buffer;
-        const packed = await encryptFileHybrid(key.privateKey, buffer, EncryptionAlgorithm.AES_256_GCM);
+        const algoToUse = (selectedKeyMeta?.defaultAlgo as EncryptionAlgorithm) || EncryptionAlgorithm.AES_256_GCM;
+        const packed = await encryptFileHybrid(key.privateKey, buffer, algoToUse);
         output = arrayBufferToBase64(packed);
       }
 
@@ -181,6 +182,17 @@ const TextOperationsView: React.FC = () => {
                 />
                 <span>{t.textOps.hybridMode}</span>
               </label>
+
+              {algoMode === 'HYBRID' && selectedKeyMeta && (
+                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center gap-2">
+                   <div className="w-4 h-4 text-blue-500 flex-shrink-0">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-4m0 0V5m0 12l-4-4m4 4l4-4" />
+                     </svg>
+                   </div>
+                   <span className="text-xs font-mono text-slate-400">算法: <span className="bg-blue-600 font-bold px-1.5 py-0.5 rounded text-white">{selectedKeyMeta.defaultAlgo || 'AES-256-GCM'}</span></span>
+                </div>
+              )}
             </div>
           </div>
         </div>

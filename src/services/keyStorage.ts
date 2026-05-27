@@ -6,6 +6,7 @@ export interface StoredKey {
   bits: number;
   description?: string;
   createdAt: string;
+  defaultAlgo?: string;
 }
 
 const STORAGE_KEY = 'rsa_crypto_suite_saved_keys';
@@ -35,7 +36,7 @@ const ensureKeysDir = () => {
   return dir;
 };
 
-export const saveKeyToStorage = (name: string, publicKey: string, privateKey: string, bits: number, description?: string): StoredKey => {
+export const saveKeyToStorage = (name: string, publicKey: string, privateKey: string, bits: number, description?: string, defaultAlgo?: string): StoredKey => {
   const savedKeys = getSavedKeys();
   const newName = name.trim() || `RSA-${bits}`;
   
@@ -46,7 +47,8 @@ export const saveKeyToStorage = (name: string, publicKey: string, privateKey: st
     privateKey,
     bits,
     description,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    defaultAlgo: defaultAlgo || 'AES-256-GCM'
   };
   
   savedKeys.push(newKey);

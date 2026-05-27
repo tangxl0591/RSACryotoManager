@@ -13,6 +13,7 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({ onKeyChange }) => {
   const [keySize, setKeySize] = useState<KeySize>(2048);
   const [keyName, setKeyName] = useState('');
   const [description, setDescription] = useState('');
+  const [defaultAlgo, setDefaultAlgo] = useState('AES-256-GCM');
   const [isGenerating, setIsGenerating] = useState(false);
   const [savedKeys, setSavedKeys] = useState<StoredKey[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,7 +32,7 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({ onKeyChange }) => {
       const pair = await generateKeyPair(keySize);
       
       const customName = keyName.trim() || `RSA-${keySize} Key`;
-      const doc = saveKeyToStorage(customName, pair.publicKey, pair.privateKey, keySize, description);
+      const doc = saveKeyToStorage(customName, pair.publicKey, pair.privateKey, keySize, description, defaultAlgo);
       
       // Update lists
       const updatedList = getSavedKeys();
@@ -161,6 +162,19 @@ const GeneratorView: React.FC<GeneratorViewProps> = ({ onKeyChange }) => {
                 rows={3}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 transition-all resize-none"
               />
+            </div>
+
+            {/* Default DefaultEncryption Algo */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest">默认加密算法</label>
+              <select
+                value={defaultAlgo}
+                onChange={(e) => setDefaultAlgo(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-blue-500 transition-all font-medium appearance-none cursor-pointer"
+              >
+                <option value="AES-256-GCM">AES-256-GCM (Recommended)</option>
+                <option value="AES-128-GCM">AES-128-GCM</option>
+              </select>
             </div>
 
             {/* Run Generation */}
