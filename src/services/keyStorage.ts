@@ -97,36 +97,57 @@ export const getSavedKeys = (): StoredKey[] => {
         } catch (e) {}
       }
 
-      // 2. Read explicit .pem files dropped in the folder
-      const files = fs.readdirSync(dir);
+      // 2. Read explicit key files dropped in the folder or subfolders
       const pemMap = new Map<string, Partial<StoredKey>>();
 
-      files.forEach((file: string) => {
-        if (file.endsWith('.pem')) {
-          const content = fs.readFileSync(path.join(dir, file), 'utf8');
-          // Support generic names like "alice_public.pem" or "mykey private.pem"
-          let keyName = file.replace(/(_public|_private| public| private)\.pem$/i, '').trim();
-          if (file.toLowerCase().endsWith('public.pem') || file.toLowerCase().endsWith('pub.pem')) {
-             keyName = file.replace(/(_?public|_?pub)\.pem$/i, '').trim();
-          }
+      const readPemFilesRecursive = (currentDir: string) => {
+        try {
+          const items = fs.readdirSync(currentDir);
+          items.forEach((item: string) => {
+            const fullPath = path.join(currentDir, item);
+            try {
+              const stat = fs.statSync(fullPath);
+              if (stat.isDirectory()) {
+                readPemFilesRecursive(fullPath);
+              } else if (stat.isFile() && stat.size < 1024 * 100) { // Max 100KB for keys
+                if (item.endsWith('.json')) return; // skip manifest
+                const content = fs.readFileSync(fullPath, 'utf8');
+                let isKey = false;
+                let isPub = false;
+                let isPriv = false;
+                if (content.includes('PUBLIC KEY')) { isKey = true; isPub = true; }
+                if (content.includes('PRIVATE KEY')) { isKey = true; isPriv = true; }
 
-          if (!pemMap.has(keyName)) {
-             pemMap.set(keyName, {
-                id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
-                name: keyName,
-                createdAt: new Date().toISOString(),
-                bits: 2048 // Fallback
-             });
-          }
-          
-          const entry = pemMap.get(keyName)!;
-          if (content.includes('PUBLIC KEY')) {
-            entry.publicKey = content;
-          } else if (content.includes('PRIVATE KEY')) {
-            entry.privateKey = content;
-          }
-        }
-      });
+                if (isKey) {
+                  let keyName = item.replace(/(_public|_private| public| private|\.pem|\.key|\.pub|\.txt)$/ig, '').trim();
+                  if (item.toLowerCase().endsWith('public.pem') || item.toLowerCase().endsWith('pub.pem')) {
+                    keyName = item.replace(/(_?public|_?pub)\.pem$/i, '').trim();
+                  }
+
+                  if (!pemMap.has(keyName)) {
+                     pemMap.set(keyName, {
+                        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2),
+                        name: keyName,
+                        createdAt: new Date().toISOString(),
+                        bits: 2048 // Fallback
+                     });
+                  }
+                  
+                  const entry = pemMap.get(keyName)!;
+                  if (isPub && !entry.publicKey) {
+                    entry.publicKey = content;
+                  }
+                  if (isPriv && !entry.privateKey) {
+                    entry.privateKey = content;
+                  }
+                }
+              }
+            } catch (err) {}
+          });
+        } catch (err) {}
+      };
+
+      readPemFilesRecursive(dir);
 
       // 3. Combine manifest with whatever pem files exist
       pemMap.forEach((entry, name) => {
